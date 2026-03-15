@@ -48,7 +48,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
-import com.marxs.androidgodmode.AnimationScaleState
 import com.marxs.androidgodmode.QuickSettingsAction
 import com.marxs.androidgodmode.QuickSettingsExecutor
 
@@ -71,7 +70,6 @@ fun GodModeApp(
     var windowScale by remember { mutableFloatStateOf(animationState.windowScale) }
     var transitionScale by remember { mutableFloatStateOf(animationState.transitionScale) }
     var animatorScale by remember { mutableFloatStateOf(animationState.animatorScale) }
-    var statusMessage by remember { mutableStateOf("单磁贴模式已启用") }
 
     fun refreshStates() {
         canWriteSettings = Settings.System.canWrite(context)
@@ -119,7 +117,6 @@ fun GodModeApp(
                             onCheckedChange = {
                                 executor.execute(QuickSettingsAction.VIBRATION_TOGGLE)
                                 refreshStates()
-                                statusMessage = if (vibrationEnabled) "触感反馈已关闭" else "触感反馈已开启"
                             }
                         )
                         HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -132,7 +129,6 @@ fun GodModeApp(
                             onCheckedChange = {
                                 executor.toggleNeverSleep()
                                 refreshStates()
-                                statusMessage = if (neverSleepEnabled) "已恢复正常锁屏时长" else "已切到近似永不锁屏"
                             }
                         )
                     }
@@ -158,7 +154,6 @@ fun GodModeApp(
                             enabled = false,
                             onCycle = {
                                 windowScale = nextScale(windowScale, allowedScales)
-                                statusMessage = "动画倍率需要 ADB / Shizuku / Root 才能真正写入"
                             }
                         )
                         Spacer(Modifier.height(8.dp))
@@ -169,7 +164,6 @@ fun GodModeApp(
                             enabled = false,
                             onCycle = {
                                 transitionScale = nextScale(transitionScale, allowedScales)
-                                statusMessage = "动画倍率需要 ADB / Shizuku / Root 才能真正写入"
                             }
                         )
                         Spacer(Modifier.height(8.dp))
@@ -180,15 +174,12 @@ fun GodModeApp(
                             enabled = false,
                             onCycle = {
                                 animatorScale = nextScale(animatorScale, allowedScales)
-                                statusMessage = "动画倍率需要 ADB / Shizuku / Root 才能真正写入"
                             }
                         )
                         Spacer(Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(onClick = onOpenDeveloperOptions) { Text("开发者选项") }
-                            OutlinedButton(onClick = {
-                                statusMessage = "等后面接 Shizuku / ADB，这组就能真的生效"
-                            }) { Text("稍后接入") }
+                            OutlinedButton(onClick = { }) { Text("稍后接入") }
                         }
                     }
                 }
@@ -213,9 +204,6 @@ fun GodModeApp(
                             )
                         }
                     }
-                }
-                item {
-                    StatusCard(statusMessage = statusMessage, canWriteSettings = canWriteSettings)
                 }
                 item { Spacer(Modifier.height(16.dp)) }
             }
@@ -318,23 +306,4 @@ private fun ScaleEditorRow(
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
-}
-
-@Composable
-private fun StatusCard(statusMessage: String, canWriteSettings: Boolean) {
-    Card(
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Status", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-            Text(statusMessage, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                if (canWriteSettings) "系统写入权限已就绪。"
-                else "请先授权 WRITE_SETTINGS。",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-    }
 }
