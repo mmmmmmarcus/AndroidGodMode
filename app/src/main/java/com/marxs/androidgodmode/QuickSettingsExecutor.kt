@@ -27,6 +27,8 @@ class QuickSettingsExecutor(private val context: Context) {
 
     fun isNeverSleepEnabled(): Boolean = screenTimeoutController.isNeverSleepEnabled()
 
+    fun neverSleepStatusLabel(): String = screenTimeoutController.statusLabel()
+
     fun toggleNeverSleep(): Result<Unit> {
         if (!canWriteSettings()) {
             return Result.failure(IllegalStateException("WRITE_SETTINGS permission required"))

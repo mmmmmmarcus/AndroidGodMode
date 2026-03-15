@@ -7,7 +7,7 @@ class ScreenTimeoutController(
     private val context: Context,
     private val preferences: GodModePreferences
 ) {
-    private val neverSleepTimeout = Int.MAX_VALUE
+    private val neverSleepTimeout = 86_400_000
 
     fun currentTimeoutMillis(): Int {
         return Settings.System.getInt(
@@ -18,6 +18,15 @@ class ScreenTimeoutController(
     }
 
     fun isNeverSleepEnabled(): Boolean = currentTimeoutMillis() >= neverSleepTimeout
+
+    fun statusLabel(): String {
+        val timeout = currentTimeoutMillis()
+        return if (timeout >= neverSleepTimeout) {
+            "当前为超长亮屏（近似永不锁屏）"
+        } else {
+            "当前锁屏时长：${formatTimeout(timeout)}"
+        }
+    }
 
     fun toggleNeverSleep(): Result<Unit> = runCatching {
         val current = currentTimeoutMillis()
@@ -36,5 +45,14 @@ class ScreenTimeoutController(
             timeoutMillis
         )
         check(changed) { "Unable to update screen timeout" }
+    }
+
+    private fun formatTimeout(timeoutMillis: Int): String {
+        val seconds = timeoutMillis / 1000
+        return when {
+            seconds < 60 -> "${seconds} 秒"
+            seconds % 60 == 0 -> "${seconds / 60} 分钟"
+            else -> "${seconds / 60} 分 ${seconds % 60} 秒"
+        }
     }
 }
