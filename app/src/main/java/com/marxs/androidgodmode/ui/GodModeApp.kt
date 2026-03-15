@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.MotionPhotosAuto
 import androidx.compose.material.icons.rounded.Vibration
@@ -135,16 +136,10 @@ fun GodModeApp(
                 }
                 item {
                     SectionCard(title = "Animation Scale") {
-                        ToggleRow(
-                            icon = Icons.Rounded.MotionPhotosAuto,
-                            title = "动画倍率总开关",
-                            subtitle = if (animationState.supported) "已接入系统动画倍率控制" else animationState.reason,
-                            checked = animationState.enabled,
-                            enabled = false,
-                            onCheckedChange = {
-                                executor.setAnimationScaleEnabled(!animationState.enabled)
-                                refreshStates()
-                            }
+                        Text(
+                            text = animationState.reason,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.height(12.dp))
                         ScaleEditorRow(
@@ -176,11 +171,17 @@ fun GodModeApp(
                                 animatorScale = nextScale(animatorScale, allowedScales)
                             }
                         )
-                        Spacer(Modifier.height(10.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = onOpenDeveloperOptions) { Text("开发者选项") }
-                            OutlinedButton(onClick = { }) { Text("稍后接入") }
-                        }
+                    }
+                }
+                item {
+                    SectionCard(title = "Developer Options") {
+                        ActionRow(
+                            icon = Icons.Rounded.Code,
+                            title = "前往 Developer Options",
+                            subtitle = "打开系统开发者选项",
+                            buttonLabel = "打开",
+                            onClick = onOpenDeveloperOptions
+                        )
                     }
                 }
                 item {
@@ -273,6 +274,35 @@ private fun ToggleRow(
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(checked = checked, enabled = enabled, onCheckedChange = { onCheckedChange() })
+    }
+}
+
+@Composable
+private fun ActionRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    buttonLabel: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(46.dp)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f), RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        OutlinedButton(onClick = onClick) { Text(buttonLabel) }
     }
 }
 
