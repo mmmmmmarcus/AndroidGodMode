@@ -23,7 +23,7 @@
         <service
             android:name=".GodModeTileOneService"
             android:exported="true"
-            android:icon="@drawable/ic_godmode"
+            android:icon="@drawable/ic_tile_touch_feedback"
             android:label="Touch Feedback"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>

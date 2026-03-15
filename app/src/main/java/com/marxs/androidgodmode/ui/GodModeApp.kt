@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.MotionPhotosAuto
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -27,6 +29,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -35,6 +38,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,6 +48,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import com.marxs.androidgodmode.AnimationScaleState
 import com.marxs.androidgodmode.QuickSettingsAction
 import com.marxs.androidgodmode.QuickSettingsExecutor
 
@@ -51,15 +56,21 @@ import com.marxs.androidgodmode.QuickSettingsExecutor
 @Composable
 fun GodModeApp(
     onOpenWriteSettings: () -> Unit,
+    onOpenDeveloperOptions: () -> Unit,
     onRequestTile: () -> Unit,
     onOpenQuickSettingsHelp: () -> Unit
 ) {
     val context = LocalContext.current
     val executor = remember { QuickSettingsExecutor(context) }
+    val allowedScales = remember { executor.animationScaleValues() }
     var canWriteSettings by remember { mutableStateOf(Settings.System.canWrite(context)) }
     var vibrationEnabled by remember { mutableStateOf(executor.isActionEnabled(QuickSettingsAction.VIBRATION_TOGGLE)) }
     var neverSleepEnabled by remember { mutableStateOf(executor.isNeverSleepEnabled()) }
     var neverSleepStatus by remember { mutableStateOf(executor.neverSleepStatusLabel()) }
+    var animationState by remember { mutableStateOf(executor.animationScaleState()) }
+    var windowScale by remember { mutableFloatStateOf(animationState.windowScale) }
+    var transitionScale by remember { mutableFloatStateOf(animationState.transitionScale) }
+    var animatorScale by remember { mutableFloatStateOf(animationState.animatorScale) }
     var statusMessage by remember { mutableStateOf("单磁贴模式已启用") }
 
     fun refreshStates() {
@@ -67,6 +78,10 @@ fun GodModeApp(
         vibrationEnabled = executor.isActionEnabled(QuickSettingsAction.VIBRATION_TOGGLE)
         neverSleepEnabled = executor.isNeverSleepEnabled()
         neverSleepStatus = executor.neverSleepStatusLabel()
+        animationState = executor.animationScaleState()
+        windowScale = animationState.windowScale
+        transitionScale = animationState.transitionScale
+        animatorScale = animationState.animatorScale
     }
 
     LaunchedEffect(Unit) { refreshStates() }
@@ -123,6 +138,61 @@ fun GodModeApp(
                     }
                 }
                 item {
+                    SectionCard(title = "Animation Scale") {
+                        ToggleRow(
+                            icon = Icons.Rounded.MotionPhotosAuto,
+                            title = "动画倍率总开关",
+                            subtitle = if (animationState.supported) "已接入系统动画倍率控制" else animationState.reason,
+                            checked = animationState.enabled,
+                            enabled = false,
+                            onCheckedChange = {
+                                executor.setAnimationScaleEnabled(!animationState.enabled)
+                                refreshStates()
+                            }
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        ScaleEditorRow(
+                            label = "Window",
+                            value = windowScale,
+                            values = allowedScales,
+                            enabled = false,
+                            onCycle = {
+                                windowScale = nextScale(windowScale, allowedScales)
+                                statusMessage = "动画倍率需要 ADB / Shizuku / Root 才能真正写入"
+                            }
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        ScaleEditorRow(
+                            label = "Transition",
+                            value = transitionScale,
+                            values = allowedScales,
+                            enabled = false,
+                            onCycle = {
+                                transitionScale = nextScale(transitionScale, allowedScales)
+                                statusMessage = "动画倍率需要 ADB / Shizuku / Root 才能真正写入"
+                            }
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        ScaleEditorRow(
+                            label = "Animator",
+                            value = animatorScale,
+                            values = allowedScales,
+                            enabled = false,
+                            onCycle = {
+                                animatorScale = nextScale(animatorScale, allowedScales)
+                                statusMessage = "动画倍率需要 ADB / Shizuku / Root 才能真正写入"
+                            }
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = onOpenDeveloperOptions) { Text("开发者选项") }
+                            OutlinedButton(onClick = {
+                                statusMessage = "等后面接 Shizuku / ADB，这组就能真的生效"
+                            }) { Text("稍后接入") }
+                        }
+                    }
+                }
+                item {
                     SectionCard(title = "Quick Settings") {
                         Text(
                             "当前只保留一个磁贴：触感反馈。",
@@ -151,6 +221,11 @@ fun GodModeApp(
             }
         }
     }
+}
+
+private fun nextScale(current: Float, values: List<Float>): Float {
+    val index = values.indexOfFirst { it == current }.takeIf { it >= 0 } ?: 0
+    return values[(index + 1) % values.size]
 }
 
 @Composable
@@ -211,6 +286,38 @@ private fun ToggleRow(
         }
         Switch(checked = checked, enabled = enabled, onCheckedChange = { onCheckedChange() })
     }
+}
+
+@Composable
+private fun ScaleEditorRow(
+    label: String,
+    value: Float,
+    values: List<Float>,
+    enabled: Boolean,
+    onCycle: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(label, modifier = Modifier.width(84.dp), fontWeight = FontWeight.SemiBold)
+        OutlinedTextField(
+            value = "${value}x",
+            onValueChange = {},
+            readOnly = true,
+            enabled = enabled,
+            modifier = Modifier.weight(1f)
+        )
+        OutlinedButton(onClick = onCycle, enabled = enabled) {
+            Text("切换")
+        }
+    }
+    Text(
+        text = "可选：${values.joinToString(" / ") { "${it}x" }}",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }
 
 @Composable

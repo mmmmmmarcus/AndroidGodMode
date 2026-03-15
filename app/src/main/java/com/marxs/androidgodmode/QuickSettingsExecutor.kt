@@ -7,6 +7,7 @@ class QuickSettingsExecutor(private val context: Context) {
     private val vibrationController = VibrationController(context)
     private val preferences = GodModePreferences(context)
     private val screenTimeoutController = ScreenTimeoutController(context, preferences)
+    private val animationScaleController = AnimationScaleController(context)
 
     fun canWriteSettings(): Boolean = Settings.System.canWrite(context)
 
@@ -34,5 +35,15 @@ class QuickSettingsExecutor(private val context: Context) {
             return Result.failure(IllegalStateException("WRITE_SETTINGS permission required"))
         }
         return screenTimeoutController.toggleNeverSleep()
+    }
+
+    fun animationScaleState(): AnimationScaleState = animationScaleController.readState()
+
+    fun animationScaleValues(): List<Float> = animationScaleController.allowedValues()
+
+    fun setAnimationScaleEnabled(enabled: Boolean): Result<Unit> = animationScaleController.setEnabled(enabled)
+
+    fun setAnimationScales(window: Float, transition: Float, animator: Float): Result<Unit> {
+        return animationScaleController.setScales(window, transition, animator)
     }
 }

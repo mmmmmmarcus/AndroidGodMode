@@ -29,6 +29,9 @@ class MainActivity : ComponentActivity() {
                             )
                         )
                     },
+                    onOpenDeveloperOptions = {
+                        startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+                    },
                     onRequestTile = ::requestTile,
                     onOpenQuickSettingsHelp = {
                         Toast.makeText(
@@ -52,7 +55,7 @@ class MainActivity : ComponentActivity() {
         statusBarManager.requestAddTileService(
             ComponentName(this, GodModeTileOneService::class.java),
             "Touch Feedback",
-            android.graphics.drawable.Icon.createWithResource(this, R.drawable.ic_godmode),
+            android.graphics.drawable.Icon.createWithResource(this, R.drawable.ic_tile_touch_feedback),
             mainExecutor
         ) { result ->
             val message = when (result) {
