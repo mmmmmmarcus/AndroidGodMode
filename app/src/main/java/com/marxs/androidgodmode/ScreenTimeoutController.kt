@@ -7,7 +7,7 @@ class ScreenTimeoutController(
     private val context: Context,
     private val preferences: GodModePreferences
 ) {
-    private val longTimeout = 600_000
+    private val neverSleepTimeout = Int.MAX_VALUE
 
     fun currentTimeoutMillis(): Int {
         return Settings.System.getInt(
@@ -17,19 +17,19 @@ class ScreenTimeoutController(
         )
     }
 
-    fun isAwakeModeEnabled(): Boolean = currentTimeoutMillis() >= longTimeout
+    fun isNeverSleepEnabled(): Boolean = currentTimeoutMillis() >= neverSleepTimeout
 
-    fun toggle(): Result<Unit> = runCatching {
+    fun toggleNeverSleep(): Result<Unit> = runCatching {
         val current = currentTimeoutMillis()
-        if (current < longTimeout) {
+        if (current < neverSleepTimeout) {
             preferences.setLastScreenTimeout(current)
-            setTimeout(longTimeout)
+            setTimeout(neverSleepTimeout)
         } else {
             setTimeout(preferences.getLastScreenTimeout().coerceAtLeast(15_000))
         }
     }
 
-    fun setTimeout(timeoutMillis: Int) {
+    private fun setTimeout(timeoutMillis: Int) {
         val changed = Settings.System.putInt(
             context.contentResolver,
             Settings.System.SCREEN_OFF_TIMEOUT,
